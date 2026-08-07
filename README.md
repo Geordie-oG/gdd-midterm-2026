@@ -1,6 +1,6 @@
-# GDD Space Invaders Project Starter
+# GDD Space Invaders Midterm Starter
 
-This is a starting codebase for GDD Project.
+This is a starting codebase for GDD Midterm.
 
 ## References
 This project is based from this 
