@@ -8,7 +8,7 @@ public class Player extends Sprite {
 
     private static final int START_X = 270;
     private static final int START_Y = 540;
-    private int currentSpeed = 2;
+    private int currentSpeed = 3;
     private int dy;
     private boolean movingLeft;
     private boolean movingRight;
@@ -83,7 +83,17 @@ public class Player extends Sprite {
     }
 
     private void updateVelocity() {
-        dx = (movingRight ? currentSpeed : 0) - (movingLeft ? currentSpeed : 0);
-        dy = (movingDown ? currentSpeed : 0) - (movingUp ? currentSpeed : 0);
+        int horizontalDirection = (movingRight ? 1 : 0) - (movingLeft ? 1 : 0);
+        int verticalDirection = (movingDown ? 1 : 0) - (movingUp ? 1 : 0);
+
+        if (horizontalDirection != 0 && verticalDirection != 0) {
+            int diagonalSpeed = Math.max(1,
+                    (int) Math.round(currentSpeed / Math.sqrt(2.0)));
+            dx = horizontalDirection * diagonalSpeed;
+            dy = verticalDirection * diagonalSpeed;
+        } else {
+            dx = horizontalDirection * currentSpeed;
+            dy = verticalDirection * currentSpeed;
+        }
     }
 }

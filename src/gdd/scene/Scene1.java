@@ -556,6 +556,7 @@ public class Scene1 extends JPanel {
                 player.die();
                 explosions.add(new Explosion(playerBounds.x, playerBounds.y));
                 playerExplosionFramesRemaining = PLAYER_EXPLOSION_FRAMES;
+                stopBackgroundAudio();
                 if (soundEffects != null) {
                     soundEffects.playPlayerExplosion();
                 }
@@ -633,6 +634,10 @@ public class Scene1 extends JPanel {
     private void endGame(String gameOverMessage) {
         inGame = false;
         message = gameOverMessage;
+        stopBackgroundAudio();
+    }
+
+    private void stopBackgroundAudio() {
         try {
             if (audioPlayer != null) {
                 audioPlayer.stop();
