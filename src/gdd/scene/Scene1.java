@@ -49,6 +49,7 @@ public class Scene1 extends JPanel {
 
     private int direction = -1;
     private int deaths = 0;
+    private int enemiesToDestroy;
 
     private boolean inGame = true;
     private String message = "Game Over";
@@ -138,6 +139,10 @@ public class Scene1 extends JPanel {
         spawnMap.put(501, new SpawnDetails("Alien1", 150, 0));
         spawnMap.put(502, new SpawnDetails("Alien1", 200, 0));
         spawnMap.put(503, new SpawnDetails("Alien1", 350, 0));
+
+        enemiesToDestroy = (int) spawnMap.values().stream()
+                .filter(spawn -> spawn.type.startsWith("Alien"))
+                .count();
     }
 
     private void initBoard() {
@@ -367,7 +372,9 @@ public class Scene1 extends JPanel {
         g.fillRect(0, 0, d.width, d.height);
 
         g.setColor(Color.white);
-        g.drawString("FRAME: " + frame, 10, 10);
+        g.setFont(new Font("Helvetica", Font.BOLD, 16));
+        g.drawString("FRAME: " + frame, 10, 20);
+        g.drawString("INVADERS: " + deaths + " / " + enemiesToDestroy, 10, 42);
 
         g.setColor(Color.green);
 
@@ -382,7 +389,7 @@ public class Scene1 extends JPanel {
 
         } else {
 
-            if (timer.isRunning()) {
+            if (timer != null && timer.isRunning()) {
                 timer.stop();
             }
 
@@ -397,25 +404,32 @@ public class Scene1 extends JPanel {
         g.setColor(Color.black);
         g.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
 
+        boolean missionComplete = "MISSION COMPLETE!".equals(message);
+        Color resultColor = missionComplete
+                ? new Color(80, 220, 130)
+                : new Color(235, 90, 90);
+        int panelHeight = 110;
+        int panelY = (BOARD_HEIGHT - panelHeight) / 2;
+
         g.setColor(new Color(0, 32, 48));
-        g.fillRect(50, BOARD_WIDTH / 2 - 30, BOARD_WIDTH - 100, 50);
-        g.setColor(Color.white);
-        g.drawRect(50, BOARD_WIDTH / 2 - 30, BOARD_WIDTH - 100, 50);
+        g.fillRect(50, panelY, BOARD_WIDTH - 100, panelHeight);
+        g.setColor(resultColor);
+        g.drawRect(50, panelY, BOARD_WIDTH - 100, panelHeight);
 
-        var small = new Font("Helvetica", Font.BOLD, 14);
-        var fontMetrics = this.getFontMetrics(small);
+        var resultFont = new Font("Helvetica", Font.BOLD, 34);
+        var fontMetrics = this.getFontMetrics(resultFont);
 
-        g.setColor(Color.white);
-        g.setFont(small);
+        g.setColor(resultColor);
+        g.setFont(resultFont);
         g.drawString(message, (BOARD_WIDTH - fontMetrics.stringWidth(message)) / 2,
-                BOARD_WIDTH / 2);
+                panelY + 68);
     }
 
     private void update() {
         if (playerExplosionFramesRemaining > 0) {
             playerExplosionFramesRemaining--;
             if (playerExplosionFramesRemaining == 0) {
-                endGame("Ship destroyed!");
+                endGame("SHIP DESTROYED!");
             }
             return;
         }
@@ -446,8 +460,10 @@ public class Scene1 extends JPanel {
             }
         }
 
-        if (deaths == NUMBER_OF_ALIENS_TO_DESTROY) {
-            endGame("Game won!");
+        if (enemiesToDestroy > 0 && deaths >= enemiesToDestroy) {
+            if (explosions.isEmpty()) {
+                endGame("MISSION COMPLETE!");
+            }
             return;
         }
 
@@ -472,6 +488,9 @@ public class Scene1 extends JPanel {
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
+                if (enemy.getY() > BOARD_HEIGHT) {
+                    enemy.setY(-enemy.getImage().getHeight(null));
+                }
             }
         }
 
@@ -606,7 +625,7 @@ public class Scene1 extends JPanel {
             boolean enemyWasHit = false;
             for (Enemy enemy : enemies) {
                 if (enemy.isVisible() && sweptBounds.intersects(enemy.getBounds())) {
-                    enemy.setDying(true);
+                    enemy.die();
                     explosions.add(new Explosion(enemy.getX(), enemy.getY()));
                     deaths++;
                     shot.die();
