@@ -1,4 +1,4 @@
-# GDD Space Invaders Midterm
+# GDD Space Invaders Midterm 6711266 541
 
 This fork adds the required movement, MAP-tile walls, collision behavior, and
 sound effects to the supplied Space Invaders starter.
