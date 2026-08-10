@@ -3,6 +3,7 @@ package gdd.scene;
 import gdd.AudioPlayer;
 import gdd.Game;
 import static gdd.Global.*;
+import gdd.SoundEffects;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
 import gdd.powerup.SpeedUp;
@@ -15,6 +16,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,12 +38,14 @@ public class Scene1 extends JPanel {
     private List<Explosion> explosions;
     private List<Shot> shots;
     private Player player;
-    // private Shot shot;
 
-    final int BLOCKHEIGHT = 50;
-    final int BLOCKWIDTH = 50;
-
-    final int BLOCKS_TO_DRAW = BOARD_HEIGHT / BLOCKHEIGHT;
+    private static final int BLOCK_HEIGHT = 50;
+    private static final int BLOCK_WIDTH = 50;
+    private static final int TILE_EMPTY = 0;
+    private static final int TILE_STAR = 1;
+    private static final int TILE_WALL = 2;
+    private static final int SHOT_SPEED = 20;
+    private static final int PLAYER_EXPLOSION_FRAMES = 40;
 
     private int direction = -1;
     private int deaths = 0;
@@ -55,40 +59,52 @@ public class Scene1 extends JPanel {
     private Timer timer;
     private final Game game;
 
-    private int currentRow = -1;
-    // TODO load this map from a file
-    private int mapOffset = 0;
+    // Tile codes: 0 = empty, 1 = decorative star, 2 = destructible wall.
+    // Walls live only in this map; they are never added to the enemy list.
     private final int[][] MAP = {
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+        {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
+        {2, 2, 2, 0, 1, 0, 0, 0, 0, 0, 1, 0, 2, 2, 2},
+        {2, 2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 2},
+        {0, 2, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 2, 0},
+        {0, 0, 2, 2, 0, 1, 0, 0, 0, 1, 0, 2, 2, 0, 0},
+        {0, 0, 2, 2, 2, 0, 0, 1, 0, 0, 2, 2, 2, 0, 0},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {2, 2, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 2, 2},
+        {0, 0, 0, 2, 2, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0},
+        {0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0},
+        {2, 2, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 2},
+        {0, 2, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 2, 0},
+        {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
+        {2, 2, 2, 2, 0, 0, 0, 1, 0, 0, 0, 2, 2, 2, 2},
+        {0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0},
+        {1, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1},
+        {2, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 2},
+        {0, 2, 2, 0, 0, 0, 2, 2, 2, 0, 0, 0, 2, 2, 0},
+        {1, 0, 0, 0, 2, 2, 0, 0, 0, 2, 2, 0, 0, 0, 1},
+        {2, 2, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 2, 2},
+        {0, 0, 2, 2, 0, 1, 0, 0, 0, 1, 0, 2, 2, 0, 0},
+        {0, 0, 0, 2, 2, 2, 0, 1, 0, 2, 2, 2, 0, 0, 0},
+        {2, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 2},
+        {1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1}
     };
 
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
-    private int lastRowToShow;
-    private int firstRowToShow;
+    private SoundEffects soundEffects;
+    private int playerExplosionFramesRemaining;
+
+    private static final class MapTile {
+
+        private final int mapRow;
+        private final int column;
+        private final Rectangle bounds;
+
+        private MapTile(int mapRow, int column, Rectangle bounds) {
+            this.mapRow = mapRow;
+            this.column = column;
+            this.bounds = bounds;
+        }
+    }
 
     public Scene1(Game game) {
         this.game = game;
@@ -99,7 +115,7 @@ public class Scene1 extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "src/audio/scene1.wav";
+            String filePath = gdd.ResourcePath.resolve("src/audio/scene1.wav");
             audioPlayer = new AudioPlayer(filePath);
             audioPlayer.play();
         } catch (Exception e) {
@@ -134,21 +150,29 @@ public class Scene1 extends JPanel {
         requestFocusInWindow();
         setBackground(Color.black);
 
-        timer = new Timer(1000 / 60, new GameCycle());
-        timer.start();
-
         gameInit();
         initAudio();
+        soundEffects = new SoundEffects();
+
+        timer = new Timer(1000 / 60, new GameCycle());
+        timer.start();
     }
 
     public void stop() {
-        timer.stop();
+        if (timer != null) {
+            timer.stop();
+        }
         try {
             if (audioPlayer != null) {
                 audioPlayer.stop();
+                audioPlayer = null;
             }
         } catch (Exception e) {
             System.err.println("Error closing audio player.");
+        }
+        if (soundEffects != null) {
+            soundEffects.close();
+            soundEffects = null;
         }
     }
 
@@ -158,6 +182,9 @@ public class Scene1 extends JPanel {
         powerups = new ArrayList<>();
         explosions = new ArrayList<>();
         shots = new ArrayList<>();
+        playerExplosionFramesRemaining = 0;
+        inGame = true;
+        message = "Game Over";
 
         // for (int i = 0; i < 4; i++) {
         // for (int j = 0; j < 6; j++) {
@@ -171,41 +198,53 @@ public class Scene1 extends JPanel {
     }
 
     private void drawMap(Graphics g) {
-        // Draw scrolling starfield background
+        for (MapTile star : getVisibleTiles(TILE_STAR)) {
+            drawStarCluster(g, star.bounds.x, star.bounds.y,
+                    star.bounds.width, star.bounds.height);
+        }
 
-        // Calculate smooth scrolling offset (1 pixel per frame)
-        int scrollOffset = (frame) % BLOCKHEIGHT;
+        for (MapTile wall : getVisibleTiles(TILE_WALL)) {
+            drawWallTile(g, wall.bounds);
+        }
+    }
 
-        // Calculate which rows to draw based on screen position
-        int baseRow = (frame) / BLOCKHEIGHT;
-        int rowsNeeded = (BOARD_HEIGHT / BLOCKHEIGHT) + 2; // +2 for smooth scrolling
+    private List<MapTile> getVisibleTiles(int tileType) {
+        List<MapTile> visibleTiles = new ArrayList<>();
+        int scrollOffset = frame % BLOCK_HEIGHT;
+        int baseRow = frame / BLOCK_HEIGHT;
+        int rowsNeeded = (BOARD_HEIGHT / BLOCK_HEIGHT) + 2;
 
-        // Loop through rows that should be visible on screen
         for (int screenRow = 0; screenRow < rowsNeeded; screenRow++) {
-            // Calculate which MAP row to use (with wrapping)
             int mapRow = (baseRow + screenRow) % MAP.length;
+            int y = BOARD_HEIGHT - (screenRow * BLOCK_HEIGHT) + scrollOffset;
 
-            // Calculate Y position for this row
-            // int y = (screenRow * BLOCKHEIGHT) - scrollOffset;
-            int y = BOARD_HEIGHT - ( (screenRow * BLOCKHEIGHT) - scrollOffset );
-
-            // Skip if row is completely off-screen
-            if (y > BOARD_HEIGHT || y < -BLOCKHEIGHT) {
+            if (y >= BOARD_HEIGHT || y + BLOCK_HEIGHT <= 0) {
                 continue;
             }
 
-            // Draw each column in this row
-            for (int col = 0; col < MAP[mapRow].length; col++) {
-                if (MAP[mapRow][col] == 1) {
-                    // Calculate X position
-                    int x = col * BLOCKWIDTH;
-
-                    // Draw a cluster of stars
-                    drawStarCluster(g, x, y, BLOCKWIDTH, BLOCKHEIGHT);
+            for (int column = 0; column < MAP[mapRow].length; column++) {
+                if (MAP[mapRow][column] == tileType) {
+                    Rectangle bounds = new Rectangle(column * BLOCK_WIDTH, y,
+                            BLOCK_WIDTH, BLOCK_HEIGHT);
+                    visibleTiles.add(new MapTile(mapRow, column, bounds));
                 }
             }
         }
+        return visibleTiles;
+    }
 
+    private void drawWallTile(Graphics g, Rectangle wall) {
+        int x = wall.x;
+        int y = wall.y;
+
+        g.setColor(new Color(35, 85, 105));
+        g.fillRect(x + 1, y + 1, wall.width - 2, wall.height - 2);
+        g.setColor(new Color(80, 190, 210));
+        g.drawRect(x + 2, y + 2, wall.width - 5, wall.height - 5);
+        g.setColor(new Color(15, 45, 65));
+        g.drawRect(x + 7, y + 7, wall.width - 15, wall.height - 15);
+        g.drawLine(x + 8, y + 8, x + wall.width - 9, y + wall.height - 9);
+        g.drawLine(x + wall.width - 9, y + 8, x + 8, y + wall.height - 9);
     }
 
     private void drawStarCluster(Graphics g, int x, int y, int width, int height) {
@@ -373,7 +412,13 @@ public class Scene1 extends JPanel {
     }
 
     private void update() {
-
+        if (playerExplosionFramesRemaining > 0) {
+            playerExplosionFramesRemaining--;
+            if (playerExplosionFramesRemaining == 0) {
+                endGame("Ship destroyed!");
+            }
+            return;
+        }
 
         // Check enemy spawn
         // TODO this approach can only spawn one enemy at a frame
@@ -402,13 +447,16 @@ public class Scene1 extends JPanel {
         }
 
         if (deaths == NUMBER_OF_ALIENS_TO_DESTROY) {
-            inGame = false;
-            timer.stop();
-            message = "Game won!";
+            endGame("Game won!");
+            return;
         }
 
         // player
         player.act();
+        List<MapTile> visibleWalls = getVisibleTiles(TILE_WALL);
+        if (checkPlayerWallCollision(visibleWalls)) {
+            return;
+        }
 
         // Power-ups
         for (PowerUp powerup : powerups) {
@@ -427,48 +475,7 @@ public class Scene1 extends JPanel {
             }
         }
 
-        // shot
-        List<Shot> shotsToRemove = new ArrayList<>();
-        for (Shot shot : shots) {
-
-            if (shot.isVisible()) {
-                int shotX = shot.getX();
-                int shotY = shot.getY();
-
-                for (Enemy enemy : enemies) {
-                    // Collision detection: shot and enemy
-                    int enemyX = enemy.getX();
-                    int enemyY = enemy.getY();
-
-                    if (enemy.isVisible() && shot.isVisible()
-                            && shotX >= (enemyX)
-                            && shotX <= (enemyX + ALIEN_WIDTH)
-                            && shotY >= (enemyY)
-                            && shotY <= (enemyY + ALIEN_HEIGHT)) {
-
-                        var ii = new ImageIcon(IMG_EXPLOSION);
-                        enemy.setImage(ii.getImage());
-                        enemy.setDying(true);
-                        explosions.add(new Explosion(enemyX, enemyY));
-                        deaths++;
-                        shot.die();
-                        shotsToRemove.add(shot);
-                    }
-                }
-
-                int y = shot.getY();
-                // y -= 4;
-                y -= 20;
-
-                if (y < 0) {
-                    shot.die();
-                    shotsToRemove.add(shot);
-                } else {
-                    shot.setY(y);
-                }
-            }
-        }
-        shots.removeAll(shotsToRemove);
+        updateShots(visibleWalls);
 
         // enemies
         // for (Enemy enemy : enemies) {
@@ -538,6 +545,104 @@ public class Scene1 extends JPanel {
          */
     }
 
+    private boolean checkPlayerWallCollision(List<MapTile> visibleWalls) {
+        if (!player.isVisible()) {
+            return false;
+        }
+
+        Rectangle playerBounds = player.getBounds();
+        for (MapTile wall : visibleWalls) {
+            if (playerBounds.intersects(wall.bounds)) {
+                player.die();
+                explosions.add(new Explosion(playerBounds.x, playerBounds.y));
+                playerExplosionFramesRemaining = PLAYER_EXPLOSION_FRAMES;
+                if (soundEffects != null) {
+                    soundEffects.playPlayerExplosion();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void updateShots(List<MapTile> visibleWalls) {
+        List<Shot> shotsToRemove = new ArrayList<>();
+
+        for (Shot shot : shots) {
+            if (!shot.isVisible()) {
+                shotsToRemove.add(shot);
+                continue;
+            }
+
+            Rectangle currentBounds = shot.getBounds();
+            int nextY = shot.getY() - SHOT_SPEED;
+            Rectangle sweptBounds = new Rectangle(
+                    currentBounds.x,
+                    Math.min(currentBounds.y, nextY),
+                    Math.max(1, currentBounds.width),
+                    currentBounds.height + Math.abs(currentBounds.y - nextY));
+
+            boolean wallWasHit = false;
+            for (MapTile wall : visibleWalls) {
+                if (MAP[wall.mapRow][wall.column] == TILE_WALL
+                        && sweptBounds.intersects(wall.bounds)) {
+                    MAP[wall.mapRow][wall.column] = TILE_EMPTY;
+                    shot.die();
+                    shotsToRemove.add(shot);
+                    explosions.add(new Explosion(wall.bounds.x + 7, wall.bounds.y + 7));
+                    if (soundEffects != null) {
+                        soundEffects.playWallBreak();
+                    }
+                    wallWasHit = true;
+                    break;
+                }
+            }
+
+            if (wallWasHit) {
+                continue;
+            }
+
+            boolean enemyWasHit = false;
+            for (Enemy enemy : enemies) {
+                if (enemy.isVisible() && sweptBounds.intersects(enemy.getBounds())) {
+                    enemy.setDying(true);
+                    explosions.add(new Explosion(enemy.getX(), enemy.getY()));
+                    deaths++;
+                    shot.die();
+                    shotsToRemove.add(shot);
+                    enemyWasHit = true;
+                    break;
+                }
+            }
+
+            if (enemyWasHit) {
+                continue;
+            }
+
+            if (nextY + currentBounds.height < 0) {
+                shot.die();
+                shotsToRemove.add(shot);
+            } else {
+                shot.setY(nextY);
+            }
+        }
+
+        shots.removeAll(shotsToRemove);
+    }
+
+    private void endGame(String gameOverMessage) {
+        inGame = false;
+        message = gameOverMessage;
+        try {
+            if (audioPlayer != null) {
+                audioPlayer.stop();
+                audioPlayer = null;
+            }
+        } catch (Exception e) {
+            System.err.println("Error closing audio player.");
+        }
+    }
+
     private void doGameCycle() {
         frame++;
         update();
@@ -561,21 +666,24 @@ public class Scene1 extends JPanel {
 
         @Override
         public void keyPressed(KeyEvent e) {
-            System.out.println("Scene2.keyPressed: " + e.getKeyCode());
-
-            player.keyPressed(e);
+            if (player.isVisible()) {
+                player.keyPressed(e);
+            }
 
             int x = player.getX();
             int y = player.getY();
 
             int key = e.getKeyCode();
 
-            if (key == KeyEvent.VK_SPACE && inGame) {
+            if (key == KeyEvent.VK_SPACE && inGame && player.isVisible()) {
                 System.out.println("Shots: " + shots.size());
                 if (shots.size() < 4) {
                     // Create a new shot and add it to the list
                     Shot shot = new Shot(x, y);
                     shots.add(shot);
+                    if (soundEffects != null) {
+                        soundEffects.playShot();
+                    }
                 }
             }
 

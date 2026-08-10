@@ -2,7 +2,9 @@ package gdd;
 
 import gdd.scene.Scene1;
 import gdd.scene.TitleScene;
+import java.awt.Dimension;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 public class Game extends JFrame  {
 
@@ -20,10 +22,12 @@ public class Game extends JFrame  {
     private void initUI() {
 
         setTitle("Space Invaders");
-        setSize(Global.BOARD_WIDTH, Global.BOARD_HEIGHT);
+        getContentPane().setPreferredSize(
+                new Dimension(Global.BOARD_WIDTH, Global.BOARD_HEIGHT));
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
+        pack();
         setLocationRelativeTo(null);
 
     }
@@ -48,5 +52,6 @@ public class Game extends JFrame  {
         scene1.start();
         revalidate();
         repaint();
+        SwingUtilities.invokeLater(() -> scene1.requestFocusInWindow());
     }
 }

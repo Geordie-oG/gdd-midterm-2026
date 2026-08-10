@@ -24,7 +24,7 @@ public class Shot extends Sprite {
         var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
                 ii.getIconHeight() * SCALE_FACTOR, 
                 java.awt.Image.SCALE_SMOOTH);
-        setImage(scaledImage);
+        setImage(new ImageIcon(scaledImage).getImage());
 
         setX(x + H_SPACE);
         setY(y - V_SPACE);

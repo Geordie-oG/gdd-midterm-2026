@@ -25,7 +25,7 @@ public class Enemy extends Sprite {
         var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
                 ii.getIconHeight() * SCALE_FACTOR,
                 java.awt.Image.SCALE_SMOOTH);
-        setImage(scaledImage);
+        setImage(new ImageIcon(scaledImage).getImage());
     }
 
     public void act(int direction) {

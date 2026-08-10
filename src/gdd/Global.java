@@ -29,10 +29,15 @@ public class Global {
     public static final int PLAYER_HEIGHT = 20; // Doubled from 10
 
     // Images
-    public static final String IMG_ENEMY = "src/images/alien.png";
-    public static final String IMG_PLAYER = "src/images/player.png";
-    public static final String IMG_SHOT = "src/images/shot.png";
-    public static final String IMG_EXPLOSION = "src/images/explosion.png";
-    public static final String IMG_TITLE = "src/images/title.png";
-    public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
+    public static final String IMG_ENEMY = ResourcePath.resolve("src/images/alien.png");
+    public static final String IMG_PLAYER = ResourcePath.resolve("src/images/player.png");
+    public static final String IMG_SHOT = ResourcePath.resolve("src/images/shot.png");
+    public static final String IMG_EXPLOSION = ResourcePath.resolve("src/images/explosion.png");
+    public static final String IMG_TITLE = ResourcePath.resolve("src/images/title.png");
+    public static final String IMG_POWERUP_SPEEDUP = ResourcePath.resolve("src/images/powerup-s.png");
+
+    // One-shot sound effects
+    public static final String SFX_SHOT = ResourcePath.resolve("src/audio/shot.wav");
+    public static final String SFX_WALL_BREAK = ResourcePath.resolve("src/audio/wall-break.wav");
+    public static final String SFX_PLAYER_EXPLOSION = ResourcePath.resolve("src/audio/player-explosion.wav");
 }

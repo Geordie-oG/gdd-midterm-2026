@@ -1,6 +1,7 @@
 package gdd.sprite;
 
 import java.awt.Image;
+import java.awt.Rectangle;
 
 abstract public class Sprite {
 
@@ -17,16 +18,24 @@ abstract public class Sprite {
         visible = true;
     }
 
-    abstract public void act();
+    /**
+     * Default update hook for stationary sprites. Moving sprites override this.
+     */
+    public void act() {
+        // Intentionally empty.
+    }
 
     public boolean collidesWith(Sprite other) {
         if (other == null || !this.isVisible() || !other.isVisible()) {
             return false;
         }
-        return this.getX() < other.getX() + other.getImage().getWidth(null)
-                && this.getX() + this.getImage().getWidth(null) > other.getX()
-                && this.getY() < other.getY() + other.getImage().getHeight(null)
-                && this.getY() + this.getImage().getHeight(null) > other.getY();
+        return getBounds().intersects(other.getBounds());
+    }
+
+    public Rectangle getBounds() {
+        int width = image == null ? 0 : image.getWidth(null);
+        int height = image == null ? 0 : image.getHeight(null);
+        return new Rectangle(x, y, width, height);
     }
 
     public void die() {
