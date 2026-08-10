@@ -627,6 +627,9 @@ public class Scene1 extends JPanel {
                 if (enemy.isVisible() && sweptBounds.intersects(enemy.getBounds())) {
                     enemy.die();
                     explosions.add(new Explosion(enemy.getX(), enemy.getY()));
+                    if (soundEffects != null) {
+                        soundEffects.playEnemyHit();
+                    }
                     deaths++;
                     shot.die();
                     shotsToRemove.add(shot);

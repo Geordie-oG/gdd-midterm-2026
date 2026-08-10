@@ -1,5 +1,6 @@
 package gdd;
 
+import static gdd.Global.SFX_ENEMY_HIT;
 import static gdd.Global.SFX_PLAYER_EXPLOSION;
 import static gdd.Global.SFX_SHOT;
 import static gdd.Global.SFX_WALL_BREAK;
@@ -10,13 +11,14 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
-/** Loads and replays the three short, non-looping gameplay effects. */
+/** Loads and replays the short, non-looping gameplay effects. */
 public class SoundEffects {
 
     private final Map<String, Clip> clips = new HashMap<>();
 
     public SoundEffects() {
         load(SFX_SHOT);
+        load(SFX_ENEMY_HIT);
         load(SFX_WALL_BREAK);
         load(SFX_PLAYER_EXPLOSION);
     }
@@ -47,6 +49,10 @@ public class SoundEffects {
 
     public void playShot() {
         play(SFX_SHOT);
+    }
+
+    public void playEnemyHit() {
+        play(SFX_ENEMY_HIT);
     }
 
     public void playWallBreak() {

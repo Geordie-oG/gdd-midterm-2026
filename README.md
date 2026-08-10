@@ -11,6 +11,8 @@ sound effects to the supplied Space Invaders starter.
 - Player collision with a wall triggers an explosion and sound effect.
 - A shot destroys one wall tile and triggers an explosion and sound effect.
 - Firing an accepted shot plays a separate laser sound effect.
+- Destroying an invader plays its own electronic hit effect, distinct from the
+  laser, wall break, and player explosion.
 - The HUD tracks all scheduled invaders and displays `MISSION COMPLETE!` after
   the final invader is destroyed.
 

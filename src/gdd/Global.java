@@ -38,6 +38,7 @@ public class Global {
 
     // One-shot sound effects
     public static final String SFX_SHOT = ResourcePath.resolve("src/audio/shot.wav");
+    public static final String SFX_ENEMY_HIT = ResourcePath.resolve("src/audio/enemy-hit.wav");
     public static final String SFX_WALL_BREAK = ResourcePath.resolve("src/audio/wall-break.wav");
     public static final String SFX_PLAYER_EXPLOSION = ResourcePath.resolve("src/audio/player-explosion.wav");
 }
